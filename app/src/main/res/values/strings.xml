@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Travelmantics</string>
+    <string name="save">Save</string>
+    <string name="delete">delete</string>
+    <string name="new_deal">New Deal</string>
+    <string name="logout">Logout</string>
+</resources>

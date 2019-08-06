@@ -3,13 +3,17 @@ package com.example.travelmantics;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,7 +22,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,6 +39,9 @@ public class Viewedit extends AppCompatActivity {
     Button upload ;
     ImageView image;
     Activity act = this;
+    private final static int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,15 +54,22 @@ public class Viewedit extends AppCompatActivity {
         }else{
             deal = new TravelDeal();
         }
+        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, PERMISIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+        }
         image = findViewById(R.id.imgholder);
   upload = findViewById(R.id.uploadbutton);
         upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i1 = new Intent(Intent.ACTION_GET_CONTENT);
-                i1.setType("images/jpeg");
-                i1.putExtra(Intent.EXTRA_LOCAL_ONLY,true);
-                startActivityForResult(Intent.createChooser(i1,"Insert picture"),42);
+                Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                galleryIntent.setType("image/*");
+                startActivityForResult(galleryIntent.createChooser(galleryIntent, "Select picture"), 42);
+                /*Intent i1 = new Intent(Intent.ACTION_GET_CONTENT);
+                i1.setType("images/*");
+               // i1.putExtra(Intent.EXTRA_LOCAL_ONLY,true);
+                startActivityForResult(Intent.createChooser(i1,"Insert picture"),42);*/
             }
         });
     }
@@ -68,9 +84,19 @@ public class Viewedit extends AppCompatActivity {
             ref.putFile(imageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    String url = taskSnapshot.getStorage().getDownloadUrl().toString();
-                    deal.setImageurl(url);
-                    showImage(url);
+                   //String url = taskSnapshot..toString();
+                  // String url = ref.getDownloadUrl().toString();
+                    Task<Uri> task = taskSnapshot.getMetadata().getReference().getDownloadUrl();
+                    task.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            String url = uri.toString();
+                           // Toast.makeText(getBaseContext(),url,Toast.LENGTH_LONG).show();
+                            deal.setImageurl(url);
+                            showImage(url);
+                        }
+                    });
+
                 }
             });
 
@@ -81,7 +107,6 @@ public class Viewedit extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         //return super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_main,menu);
-        FirebaseUtil.check(FirebaseUtil.uid,act);
         if(FirebaseUtil.isAdmin){
             menu.findItem(R.id.menusave).setVisible(true);
             menu.findItem(R.id.menudelete).setVisible(true);
@@ -201,5 +226,10 @@ public class Viewedit extends AppCompatActivity {
                     .centerCrop()
                     .into(image);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 }

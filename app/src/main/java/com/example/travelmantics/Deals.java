@@ -28,7 +28,7 @@ Activity acty = this;
     public boolean onCreateOptionsMenu(Menu menu) {
         //return super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_one,menu);
-        FirebaseUtil.check(FirebaseUtil.uid,acty);
+        //FirebaseUtil.check(FirebaseUtil.uid,acty);
         if(FirebaseUtil.isAdmin){
             menu.findItem(R.id.menunew).setVisible(true);
         }else{

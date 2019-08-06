@@ -28,7 +28,7 @@ public class FirebaseUtil {
     public static FirebaseAuth mfirebaseauth;
     public static FirebaseAuth.AuthStateListener mfirebaseauthListener;
     private static final int RC_SIGN_IN = 123;
-    public static Boolean isAdmin;
+    public static Boolean isAdmin = false;
     public static String uid;
     public static FirebaseStorage mFirebasestorage;
     public static StorageReference mStorageReference;
@@ -44,12 +44,14 @@ public class FirebaseUtil {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 if (firebaseAuth.getCurrentUser() != null) {
                     // already signed in
-                    uid = firebaseAuth.getCurrentUser().getUid();
-                    Toast.makeText(act1.getBaseContext(),"Welcome back!"+uid,Toast.LENGTH_LONG).show();
+                    uid = firebaseAuth.getUid();
+                    check(uid,act1);
+                    Toast.makeText(act1.getBaseContext(),"Welcome back "+firebaseAuth.getCurrentUser().getDisplayName() + "!",Toast.LENGTH_LONG).show();
                 } else {
                     // not signed in
                     signin(act1);
                 }
+
             }
 
         };
@@ -57,12 +59,17 @@ public class FirebaseUtil {
         }
         public static void check(String uid, final Activity acty){
         isAdmin = false;
-       DatabaseReference ref = FirebaseUtil.mDatabaseReference.child("travelmantics").child("administrators").child(FirebaseUtil.uid);
+       DatabaseReference ref = FirebaseUtil.mDatabaseReference.child("administrators").child(uid);
        ChildEventListener listener  = new ChildEventListener() {
            @Override
            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                isAdmin = true;
-               ((Viewedit)acty).showmenu();
+               try {
+                   ((Viewedit) acty).showmenu();
+               }catch(Exception e){
+
+                   ((Deals) acty).showmenu();
+               }
 
            }
 
